@@ -22,12 +22,11 @@ public class Neo4JBoltTransport implements INeo4jTransport {
 
     private Driver driver;
     private Configuration configuration;
-    private String parsedCreateQery = null;
+    private String parsedQuery = null;
     List<String> fields;
 
 
     public Neo4JBoltTransport(Configuration config) throws MessageOutputConfigurationException {
-
 
         configuration = config;
         fields = new LinkedList<String>();;
@@ -61,16 +60,15 @@ public class Neo4JBoltTransport implements INeo4jTransport {
         }
         LOG.info("Identified " + fields.size() + " fields in graph create query.");
 
-        parsedCreateQery = parseQuery(createQuery);
-
+        parsedQuery = parseQuery(createQuery);
 
     }
 
-    private void postQuery(String query, Map<String, Object> mapping) {
+    private void postQuery(Map<String, Object> mapping) {
         Session session = null;
         try {
             session = driver.session();
-            session.run(query, mapping).consume();
+            session.run(parsedQuery, mapping).consume();
         }
         catch (ClientException e) {
             LOG.debug("Could not push message to Graph Database: " + e.getMessage());
@@ -106,13 +104,9 @@ public class Neo4JBoltTransport implements INeo4jTransport {
                 convertedFields.put(field, null);
             }
         }
-            postQuery(parsedCreateQery, convertedFields);
+            postQuery(convertedFields);
 
     }
-
-
-
-
 
     @Override
     public boolean trySend(Message message) {
